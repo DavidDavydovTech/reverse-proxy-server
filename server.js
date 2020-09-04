@@ -6,53 +6,18 @@ const bouncy = require('bouncy');
 //For finding the files in the website folders
 const path = require('path');
 const fs = require('fs');
+const { config } = require('process');
 
-//List of websites hosted on this server. Below is an example website:
-
-// example: {
-//     folder: "example-folder", //the webapp folder name in the "www" folder
-//     hosts: ["example.com",
-//             "www.example.com"], // List of domains that are allowed to access this website. If you need a subdomain to host a different webapp (for example you want a admin panel at "admin.example.com") then launch it as a seperate website with the subdomain + regular url ("admin.example.com"). In this example if www.example.com was not included the website could only be accessed via "example.com" and "www.example.com" would result in a 404.
-//     app: express(), //This should never be changed.
-//     server: null, //Never touch this, this is where the http server lives.
-//     port: 8001, //The port that this website runs on.
-//     protocol: "http", //The protocol this website uses.
-//     cert: null, //The certification to be used if the website is https
-// },
-
-const apps = {
-    cycalc: {
-        folder: "the-cycle-calc",
-        hosts: ["cycalc.daviddavydov.tech"],
-        app: express(),
-        server: null,
-        port: 8001,
-        protocol: "http", 
-        cert: null,
-        subdomains: []
-    },
-    ddtech: {
-        folder: "daviddavydovtech",
-        hosts: [
-            "www.daviddavydov.tech",
-            "daviddavydov.tech"
-        ]
-        ,
-        app: express(),
-        server: null,
-        port: 8000,
-        protocol: "http", 
-        cert: null,
-        subdomains: []
-    }
-}
+//For actually getting our apps
+const config = require('./config');
+const apps = config.apps;
 
 //This is the middleware/function used to set up and launch the websites.
 let launchWebsites = () => {
-    for(let website of Object.keys(apps)){ // Itterate through websites in the "apps" object
+    for(let website in apps){ // Itterate through websites in the "apps" object
         website = apps[website]; // Make the "website" variable refrence the current website in the "apps" object.
     
-        const websitePath = path.join(__dirname+`/www/${website.folder}/build`); //Using the "folder" key create a file path to the website's build folder.
+        const websitePath = path.join(__dirname+`/apps/${website.folder}${website.build}`); //Using the "folder" key create a file path to the website's build folder.
     
         fs.readdir(websitePath, (err, files) => { //Go to the website's build folder and store the filenames in a "files" array
             if(err){ //If there's an error trying the access the build folder (permissions, build folder doesn't exist, etc) then console log an error and skip the setup.
@@ -85,7 +50,7 @@ let launchWebsites = () => {
                         
                         // Set the route path to a variable.
                         // P.S. We don't have to worry about traversal with "../", this is taken care of automatically.
-                        let tempFilePath = path.join(__dirname+`/www/${website.folder}/build/${req.params["0"]}`); //Set the file path
+                        let tempFilePath = path.join(__dirname+`/apps/${website.folder}/build/${req.params["0"]}`); //Set the file path
 
                         //Check if file exists. If it does send the file, otherwise send a 404 and console.log an error. 
                         fs.access(tempFilePath, fs.F_OK, (err) => {
@@ -102,7 +67,7 @@ let launchWebsites = () => {
                         })
 
                     } else { // Otherwise its a route in the React website.
-                        res.sendFile(path.join(__dirname+`/www/${website.folder}/build/index.html`));
+                        res.sendFile(path.join(__dirname+`/apps/${website.folder}/build/index.html`));
 
                     }
                     
