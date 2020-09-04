@@ -3,37 +3,9 @@ const express = require('express');
 const http = require("http");
 const bouncy = require('bouncy');
 
-//For setting up mongoose.
-const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
-
 //For finding the files in the website folders
 const path = require('path');
 const fs = require('fs');
-
-// Api related stuff
-const routeBlog = require('./mongodb/routes/blog.route');
-
-
-
-// MongoDB + API Server variable
-apiApp = express();
-
-// Bodyparser Middleware
-apiApp.use(bodyParser.json());
-
-// Mongoose
-mongoose
-    .connect("mongodb://localhost:27017")
-    .then(() => console.log("MongoDB Connected..."))
-    .catch(err => console.error(err));
-
-apiApp.listen(7000, () => console.log("API Server Started."))
-
-apiApp.use("/blog", routeBlog);
-
-
-
 
 //List of websites hosted on this server. Below is an example website:
 
@@ -46,7 +18,6 @@ apiApp.use("/blog", routeBlog);
 //     port: 8001, //The port that this website runs on.
 //     protocol: "http", //The protocol this website uses.
 //     cert: null, //The certification to be used if the website is https
-//     subdomains: [] //Depricated feature kept for future refrence. Subdomains are done via the 'hosts' array.
 // },
 
 const apps = {
@@ -154,17 +125,11 @@ let launchWebsites = () => {
 
 
 let bouncyHosts = {
-    http: {
-        "api.daviddavydov.tech": 7000
-    },
-    https: {
-
-    }
+    http: {},
+    https: {}
 }
 
 launchWebsites(apps);
-
-let bouncyDirectory = Object.keys(bouncyHosts);
 
 bouncy((req, res, bounce) => {
     let date = new Date();
