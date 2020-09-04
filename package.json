@@ -1,0 +1,29 @@
+{
+  "name": "my-mern-website",
+  "version": "1.0.0",
+  "description": "My full stack website for hosting on VPS",
+  "main": "server.js",
+  "scripts": {
+    "install-index": "npm install --prefix client/index",
+    "start": "node server.js",
+    "server": "nodemon server.js",
+    "client": "npm start --prefix client/index",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix client/index && npm run build --prefix client/index"
+  },
+  "author": "David John Davydov",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "blurify": "^1.2.0",
+    "body-parser": "^1.19.0",
+    "bouncy": "^3.2.2",
+    "concurrently": "^5.2.0",
+    "express": "^4.17.1",
+    "express-subdomain": "^1.0.5",
+    "mongoose": "^5.9.20",
+    "vhost": "^3.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.3"
+  }
+}
