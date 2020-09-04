@@ -27,29 +27,29 @@ const apps = {
         protocol: 'http', 
         cert: null,
     },
-    cycalc: {
-        folder: '/the-cycle-calc',
-        build: '/build',
-        hosts: ['cycalc.daviddavydov.tech'],
-        app: express(),
-        server: null,
-        port: 8001,
-        protocol: 'http', 
-        cert: null,
-    },
-    twiddler: {
-        folder: '/daviddavydovtech',
-        build: '/',
-        hosts: [
-            'twiddler.daviddavydov.tech'
-        ]
-        ,
-        app: express(),
-        server: null,
-        port: 8000,
-        protocol: 'http', 
-        cert: null,
-    }
+    // cycalc: {
+    //     folder: '/the-cycle-calc',
+    //     build: '/build',
+    //     hosts: ['cycalc.daviddavydov.tech'],
+    //     app: express(),
+    //     server: null,
+    //     port: 8001,
+    //     protocol: 'http', 
+    //     cert: null,
+    // },
+    // twiddler: {
+    //     folder: '/daviddavydovtech',
+    //     build: '/',
+    //     hosts: [
+    //         'twiddler.daviddavydov.tech'
+    //     ]
+    //     ,
+    //     app: express(),
+    //     server: null,
+    //     port: 8000,
+    //     protocol: 'http', 
+    //     cert: null,
+    // }
 }
 
 module.exports.apps = apps;

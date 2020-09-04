@@ -9,8 +9,8 @@ const fs = require('fs');
 const { config } = require('process');
 
 //For actually getting our apps
-const config = require('./config');
-const apps = config.apps;
+const appConfig = require('./config');
+const apps = appConfig.apps;
 
 //This is the middleware/function used to set up and launch the websites.
 let launchWebsites = () => {
