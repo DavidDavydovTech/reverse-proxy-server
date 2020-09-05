@@ -14,11 +14,13 @@ const apps = appConfig.apps;
 
 //This is the middleware/function used to set up and launch the websites.
 let launchWebsites = () => {
+    console.log(apps)
     for(let website in apps){ // Itterate through websites in the "apps" object
         website = apps[website]; // Make the "website" variable refrence the current website in the "apps" object.
     
         const websitePath = path.join(__dirname+`/apps/${website.folder}${website.build}`); //Using the "folder" key create a file path to the website's build folder.
-    
+        console.log(websitePath)
+        
         fs.readdir(websitePath, (err, files) => { //Go to the website's build folder and store the filenames in a "files" array
             if(err){ //If there's an error trying the access the build folder (permissions, build folder doesn't exist, etc) then console log an error and skip the setup.
                 console.log(`${website.host}: An error occured while trying to access files.`)
