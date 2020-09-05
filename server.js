@@ -24,6 +24,7 @@ let launchWebsites = () => {
         fs.readdir(websitePath, (err, files) => { //Go to the website's build folder and store the filenames in a "files" array
             if(err){ //If there's an error trying the access the build folder (permissions, build folder doesn't exist, etc) then console log an error and skip the setup.
                 console.log(`${website.host}: An error occured while trying to access files.`)
+                console.log(err)
             } else {
                 let isHttps = null; //Assigned to true or false in the if statement below, used to launch the server using different methods depending on if its http or https. 
     
