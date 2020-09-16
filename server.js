@@ -43,7 +43,7 @@ fs.readdir(configsPath)
     })
     .then(async (servers) => {
         servers.forEach(async (server, i) => {
-            let domain = `${server.domain}.${server.tld}`;
+            let domain = server.domain;
             let port = await portScout.range(49152, 65535);
             let proccessedSubdomains= [];
 
@@ -112,7 +112,35 @@ fs.readdir(configsPath)
 
         app.all('*', (req, res) => {
             let origin = parseDomain(req.headers);
+            let desitnation = `${origin.domain}.${origin.topLevelDomains ? origin.topLevelDomains.join('.') : ''}`;
             console.log(origin)
+            let subs = origin.subDomains ? [...origin.subDomains] : [];
+
+            try {
+                if (serverDirectory.hasOwnProperty[desitnation]) {
+                    let portLink = serverDirectory[desitnation];
+                    while ( subs.length > 0 ) {
+                        let subdomain = subs.pop();
+                        if ( portLink.hasOwnProperty(subdomain)) {
+                            portLink = portLink[subdomain];
+                        } else {
+                            throw `SUBDOMAIN DOES NOT EXIST`;
+                        }
+                    }
+
+                    console.log(portLink);
+                } else {
+                    throw 'DOMAIN DOES NOT EXIST'
+                }
+            }
+            catch (err) {
+                log.error(
+                    'bouncer',
+                    `Client tried to access ${origin.hostname} but an unknown error occured.`,
+                    err
+                );
+                res.status(400).send('PAGE NOT FOUND');
+            }
         })
         
         app.listen(80);
