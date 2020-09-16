@@ -61,7 +61,7 @@ fs.readdir(configsPath)
                 if ( serverDirectory[domain].hasOwnProperty[subdomain] ) {
                     proccessedSubdomains.forEach((e) => {
                         if ( e !== subdomain ) {
-                            delete serverDirectory[domain][subdomain];
+                            delete serverDirectory[domain][e];
                         }
                     });
 
@@ -91,7 +91,7 @@ fs.readdir(configsPath)
             }
             catch (err) {
                 proccessedSubdomains.forEach((e) => {
-                    delete serverDirectory[domain][subdomain];
+                    delete serverDirectory[domain][e];
                 });
                 
                 log.error(
