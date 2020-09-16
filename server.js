@@ -119,13 +119,16 @@ fs.readdir(configsPath)
             try {
                 if (serverDirectory.hasOwnProperty[desitnation]) {
                     let portLink = serverDirectory[desitnation];
-                    while ( subs.length > 0 ) {
-                        let subdomain = subs.pop();
-                        if ( portLink.hasOwnProperty(subdomain)) {
-                            portLink = portLink[subdomain];
-                        } else {
-                            throw `SUBDOMAIN DOES NOT EXIST`;
+                    if (subs) {
+                        for (let port of subs) {
+                            if (portLink.hasOwnProperty[port]) {
+                                console.log(portLink[port]) 
+                            } else {
+                                throw `SUBDOMAIN DOES NOT EXIST`;
+                            }
                         }
+                    } else {
+                        console.log(portLink)
                     }
 
                     console.log(portLink);
