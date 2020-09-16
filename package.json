@@ -23,6 +23,7 @@
     "express": "^4.17.1",
     "express-subdomain": "^1.0.5",
     "mongoose": "^5.9.20",
+    "parse-domain": "^3.0.2",
     "port-scout": "^1.1.2",
     "tcp-port-used": "^1.0.1",
     "url-pattern": "^1.0.3",
