@@ -14,6 +14,7 @@
   "author": "David John Davydov",
   "license": "UNLICENSED",
   "dependencies": {
+    "axios": "^0.20.0",
     "blurify": "^1.2.0",
     "body-parser": "^1.19.0",
     "bouncy": "^3.2.2",

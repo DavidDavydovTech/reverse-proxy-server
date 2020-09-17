@@ -2,9 +2,12 @@
 require('dotenv').config();
 // Proxy
 // const urlPattern = require('url-pattern'); for later
+// const http = require('http');
 const parseDomain = require('parse-domain').parseDomain;
 const express = require('express');
+const bodyParser = require('body-parser');
 const portScout = require('port-scout');
+const axios = require('axios');
 // Files
 const path = require('path');
 const fs = require('fs').promises;
@@ -20,6 +23,7 @@ const log = {
     },
 };
 
+// Actual Proxy set-up and deployment.
 let serverDirectory = {};
 let serversContainer = {};
 const configsPath = path.join(__dirname, process.env.CONFIGS_PATH); //Using the "folder" key create a file path to the website's build folder.
@@ -61,9 +65,9 @@ fs.readdir(configsPath)
                 }
 
                 if ( serverDirectory[domain].hasOwnProperty[subdomain] ) {
-                    proccessedSubdomains.forEach((e) => {
+                    proccessedSubdomains.forEach((e, i) => {
                         if ( e !== subdomain ) {
-                            delete serverDirectory[domain][e];
+                            delete serverDirectory[domain][i];
                         }
                     });
 
@@ -92,8 +96,8 @@ fs.readdir(configsPath)
                 serverApp = require(appLocation);
             }
             catch (err) {
-                proccessedSubdomains.forEach((e) => {
-                    delete serverDirectory[domain][e];
+                proccessedSubdomains.forEach((e, i) => {
+                    delete serverDirectory[domain][i];
                 });
                 
                 log.error(
@@ -109,6 +113,13 @@ fs.readdir(configsPath)
     })
     .then ( () => {
         let app = express();
+        app.use( 
+            bodyParser.json({
+                verify: (req, res, buf) => {
+                req.rawBody = buf
+                }
+          })
+        );
 
         app.all('*', (req, res) => {
             let origin = parseDomain(req.headers);
@@ -120,10 +131,24 @@ fs.readdir(configsPath)
                 if (serverDirectory.hasOwnProperty[desitnation]) {
                     let portLink = serverDirectory[desitnation];
                     if (subs) {
-                        for (let port of subs) {
-                            if (portLink.hasOwnProperty[port]) {
-                                console.log(portLink[port]) 
-                            } else {
+                        let found = false;
+                        for (let sub of subs) {
+                            if (portLink.hasOwnProperty[sub]) {
+                                found = true;
+
+                                axios({
+                                    method: req.method,
+                                    url: req.url,
+                                    headers: req.headers,
+                                    params: req.params,
+                                    data: req.rawBody
+                                })
+                                    .then((axiosRes) => {
+                                        axiosRes.data.pipe(res);
+                                    })
+                            }
+
+                            if ( !found ) {
                                 throw `SUBDOMAIN DOES NOT EXIST`;
                             }
                         }
