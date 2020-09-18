@@ -137,7 +137,12 @@ fs.readdir(configsPath)
 
                                 request({
                                     method: req.method,
-                                    uri: `http://localhost:${portLink[sub]}${req.originalUrl}`
+                                    uri: `http://localhost:${portLink[sub]}`,
+                                    baseUrl: `http://localhost:${portLink[sub]}`,
+                                    headers: req.headers,
+                                    qs: req.originalUrl,
+                                    body: req.bodyRaw,
+
                                 })
                                     .pipe(res)
                                     .on('finish', (response) => {
