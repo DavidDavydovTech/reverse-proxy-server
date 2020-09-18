@@ -128,7 +128,7 @@ fs.readdir(configsPath)
             try {
                 if (serverDirectory.hasOwnProperty(desitnation)) {
                     let portLink = serverDirectory[desitnation];
-                    if (subs) {
+                    if (subs.length > 0) {
                         let found = false;
 
                         for (let sub of subs) {
@@ -161,6 +161,30 @@ fs.readdir(configsPath)
                             throw `SUBDOMAIN DOES NOT EXIST`;
                         }
                     } else {
+                        let portLink = serverDirectory[desitnation];
+                        console.log(portLink[''])
+                        if ( portLink.hasOwnProperty('') /*|| isNaN( parseInt( portLink ) === false )*/ ) {
+                            found = true;
+                            let time = Date.now();
+                            request({
+                                method: req.method,
+                                uri: req.originalUrl,
+                                baseUrl: `http://localhost:${portLink['']}`,
+                                headers: req.headers,
+                                body: req.bodyRaw,
+                            })
+                                .pipe(res)
+                                .on('finish', (response) => {
+                                    console.log(response)
+                                    time = Date.now() + 100;
+
+                                    setTimeout(() => {
+                                        if (Date.now() >= time) {
+                                            res.status(200).end;
+                                        }
+                                    })
+                                });
+                        }
                     }
                 } else {
                     throw 'DOMAIN DOES NOT EXIST'

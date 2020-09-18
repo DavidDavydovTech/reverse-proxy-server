@@ -1,6 +1,6 @@
 {
-  "name": "my-mern-website",
-  "version": "1.0.0",
+  "name": "",
+  "version": "0.1.0",
   "description": "My full stack website for hosting on VPS",
   "main": "server.js",
   "scripts": {
