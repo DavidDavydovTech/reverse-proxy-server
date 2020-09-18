@@ -142,7 +142,6 @@ fs.readdir(configsPath)
                                     headers: req.headers,
                                     qs: req.originalUrl,
                                     body: req.bodyRaw,
-
                                 })
                                     .pipe(res)
                                     .on('finish', (response) => {
