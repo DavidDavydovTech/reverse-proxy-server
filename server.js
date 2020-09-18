@@ -2,12 +2,12 @@
 require('dotenv').config();
 // Proxy
 // const urlPattern = require('url-pattern'); for later
-// const http = require('http');
+const http = require('http');
 const parseDomain = require('parse-domain').parseDomain;
 const express = require('express');
 const bodyParser = require('body-parser');
 const portScout = require('port-scout');
-const axios = require('axios');
+// const axios = require('axios');
 // Files
 const path = require('path');
 const fs = require('fs').promises;
@@ -122,38 +122,38 @@ fs.readdir(configsPath)
         );
 
         app.all('*', (req, res) => {
-            let origin = parseDomain(req.headers.host);
+            let origin = parseDomain(req.headers);
             let desitnation = `${origin.domain}.${origin.topLevelDomains ? origin.topLevelDomains.join('.') : ''}`;
+            console.log(origin)
             let subs = origin.subDomains ? [...origin.subDomains] : [];
 
             try {
-		    console.log(serverDirectory)
-		    console.log(desitnation)
-		    console.log(serverDirectory[desitnation])
-		    console.log(serverDirectory.hasOwnProperty(desitnation))
-                if (serverDirectory.hasOwnProperty(desitnation)) {
-			console.log('Got this far!!');
+                if (serverDirectory.hasOwnProperty[desitnation]) {
                     let portLink = serverDirectory[desitnation];
                     if (subs) {
                         let found = false;
                         for (let sub of subs) {
-				console.log(portLink['www'])
-                            if (portLink.hasOwnProperty(sub)) {
+                            if (portLink.hasOwnProperty[sub]) {
                                 found = true;
 
+                                http.request({
+                                    port: portLink[sub],
+                                    host: 'localhost',
+                                    method: req.method,
+                                    path: req.originalUrl
+                                }, (httpRes) => {
+                                    httpRes.pipe()
+                                })
                                 axios({
                                     method: req.method,
-                                    url: `localhost:${portLink[sub]}`,
+                                    url: req.url,
                                     headers: req.headers,
                                     params: req.params,
-                                    data: req.body
+                                    data: req.rawBody
                                 })
                                     .then((axiosRes) => {
                                         axiosRes.data.pipe(res);
                                     })
-				    .catch((err) => {
-				    console.log(err);
-				    });
                             }
 
                             if ( !found ) {
