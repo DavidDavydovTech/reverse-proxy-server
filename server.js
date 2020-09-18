@@ -140,7 +140,7 @@ fs.readdir(configsPath)
                                     uri: `http://localhost:${portLink[sub]}${req.originalUrl}`
                                 })
                                     .pipe(res)
-                                    .finish((response) => {
+                                    .on('finish', (response) => {
                                         console.log(response)
                                         res.status(200).send();
                                     });
