@@ -134,7 +134,7 @@ fs.readdir(configsPath)
                         for (let sub of subs) {
                             if (portLink.hasOwnProperty(sub)) {
                                 found = true;
-
+                                let time = Date.now();
                                 request({
                                     method: req.method,
                                     uri: req.originalUrl,
@@ -145,7 +145,13 @@ fs.readdir(configsPath)
                                     .pipe(res)
                                     .on('finish', (response) => {
                                         console.log(response)
-                                        res.status(200).send();
+                                        time = Date.now() + 100;
+
+                                        setTimeout(() => {
+                                            if (Date.now() >= time) {
+                                                res.status(200).end;
+                                            }
+                                        })
                                     });
                                 
                             }
@@ -174,7 +180,7 @@ fs.readdir(configsPath)
     });
         // console.log('gottem!')
         // bouncy((req, res, bounce) => {
-        //     let date = new Date();
+        //     let Date = new Date();
         //     console.log(req)
         //     var fullUrl = req.headers.protocol + '://' + req.headers.host + req.headers.originalUrl;
         //     console.log(fullUrl)
@@ -187,7 +193,7 @@ fs.readdir(configsPath)
         //     else {
         //         log.error(
         //             'bouncy',
-        //             `[${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}:${date.getMilliseconds()}] ${req.connection.remoteAddress?req.connection.remoteAddress:"UNDEFINED_IP"}: No matching end-point found! Header was "${req.headers.host}"!`,
+        //             `[${Date.getHours()}:${Date.getMinutes()}:${Date.getSeconds()}:${Date.getMilliseconds()}] ${req.connection.remoteAddress?req.connection.remoteAddress:"UNDEFINED_IP"}: No matching end-point found! Header was "${req.headers.host}"!`,
         //             `NO ACCESSING NON-CONFIGURED ENDPOINTS`
         //         )
         //         res.statusCode = 404;
