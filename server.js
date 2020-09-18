@@ -2,12 +2,11 @@
 require('dotenv').config();
 // Proxy
 // const urlPattern = require('url-pattern'); for later
-const http = require('http');
+const request = require('request');
 const parseDomain = require('parse-domain').parseDomain;
 const express = require('express');
 const bodyParser = require('body-parser');
 const portScout = require('port-scout');
-// const axios = require('axios');
 // Files
 const path = require('path');
 const fs = require('fs').promises;
@@ -124,7 +123,6 @@ fs.readdir(configsPath)
         app.all('*', (req, res) => {
             let origin = parseDomain(req.hostname);
             let desitnation = `${origin.domain}.${origin.topLevelDomains ? origin.topLevelDomains.join('.') : ''}`;
-            console.log(origin)
             let subs = origin.subDomains ? [...origin.subDomains] : [];
 
             try {
@@ -132,29 +130,29 @@ fs.readdir(configsPath)
                     let portLink = serverDirectory[desitnation];
                     if (subs) {
                         let found = false;
+
                         for (let sub of subs) {
                             if (portLink.hasOwnProperty(sub)) {
                                 found = true;
 
-                                http.request({
-                                    port: portLink[sub],
-                                    host: 'localhost',
+                                request({
                                     method: req.method,
                                     path: req.originalUrl
-                                }, (httpRes) => {
-                                    httpRes.pipe(res, {end: true})
                                 })
-                            }
-
-                            if ( !found ) {
-                                throw `SUBDOMAIN DOES NOT EXIST`;
+                                    .pipe(res)
+                                    .then((response) => {
+                                        console.log(response)
+                                        res.status(200).send();
+                                    });
+                                
                             }
                         }
-                    } else {
-                        console.log(portLink)
-                    }
 
-                    console.log(portLink);
+                        if ( !found ) {
+                            throw `SUBDOMAIN DOES NOT EXIST`;
+                        }
+                    } else {
+                    }
                 } else {
                     throw 'DOMAIN DOES NOT EXIST'
                 }
