@@ -122,18 +122,18 @@ fs.readdir(configsPath)
         );
 
         app.all('*', (req, res) => {
-            let origin = parseDomain(req.headers);
+            let origin = parseDomain(req.hostname);
             let desitnation = `${origin.domain}.${origin.topLevelDomains ? origin.topLevelDomains.join('.') : ''}`;
             console.log(origin)
             let subs = origin.subDomains ? [...origin.subDomains] : [];
 
             try {
-                if (serverDirectory.hasOwnProperty[desitnation]) {
+                if (serverDirectory.hasOwnProperty(desitnation)) {
                     let portLink = serverDirectory[desitnation];
                     if (subs) {
                         let found = false;
                         for (let sub of subs) {
-                            if (portLink.hasOwnProperty[sub]) {
+                            if (portLink.hasOwnProperty(sub)) {
                                 found = true;
 
                                 http.request({
@@ -142,18 +142,8 @@ fs.readdir(configsPath)
                                     method: req.method,
                                     path: req.originalUrl
                                 }, (httpRes) => {
-                                    httpRes.pipe()
+                                    httpRes.pipe(res, {end: true})
                                 })
-                                axios({
-                                    method: req.method,
-                                    url: req.url,
-                                    headers: req.headers,
-                                    params: req.params,
-                                    data: req.rawBody
-                                })
-                                    .then((axiosRes) => {
-                                        axiosRes.data.pipe(res);
-                                    })
                             }
 
                             if ( !found ) {
