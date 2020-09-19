@@ -2,6 +2,7 @@ const net = require("net");
 const { dirname } = require("path");
 const path = require("path");
 const fs = require("fs").promises;
+const urlParser = require('url-pattern')
 
 class Urusai {
   constructor(options = {}) {
@@ -9,9 +10,11 @@ class Urusai {
     options.ports = options.hasOwnProperty("ports") ? options.ports : [80];
     // Bind all methods.
     this.initalize = this.initalize.bind(this);
+    this.initalizeOnClose = this.initalizeOnClose.bind(this);
     this.initalizeHandlers = this.initalizeHandlers.bind(this);
     this.initalizeApps = this.initalizeApps.bind(this);
     this.fetchApps = this.fetchApps.bind(this);
+    this.close = this.close.bind(this);
     // Vars
 
     // Containers
@@ -34,17 +37,13 @@ class Urusai {
         return this.initalizeApps(configs)
       })
       .catch((err) => {
-        console.log(err);
+        throw err;
       });
   }
 
   initalizeOnClose = () => {
     process.on('SIGTERM', () => {
-      // Shut down handlers: 
-      for (let handlerPort in this.Handlers) {
-        handler = this.Handlers[handlerPort];
-        handler.close();
-      }
+      this.close();
     });
   }
 
@@ -107,6 +106,14 @@ class Urusai {
       }
     }
   }
+
+  close () {
+    // Shut down handlers: 
+    for (let handlerPort in this.Handlers) {
+      let handler = this.Handlers[handlerPort];
+      handler.close();
+    }
+  }
 }
 
 module.exports = Urusai;
@@ -146,6 +153,8 @@ let initalizeHandler = (port) => {
     .createServer()
     .on("connection", (req) => {
       req.on("data", async (data) => {
+        console.log(data.toString());
+        readHost(data.toString());
         forwardRequest({ port: 8080, request: data.toString() })
           .then((res) => {
             req.write(res.toString());
@@ -164,7 +173,7 @@ let initalizeHandler = (port) => {
     });
 };
 
-let forwardRequest = ({ url = "localhost", port = "80", request }) => {
+let forwardRequest = function ({ url = "localhost", port = "80", request }) {
   var socket = net.createConnection(port, url);
 
   return new Promise((resolve, reject) => {
@@ -178,3 +187,20 @@ let forwardRequest = ({ url = "localhost", port = "80", request }) => {
       .write(request);
   });
 };
+
+let readHost = (request) => {
+  let url = request.match(/(?<=Host:(\s+)).*/)[0];
+  url.replace(/\s/g, '');
+  url = new urlParser(url);
+  return url;
+}
+
+let promisify = (func) => {
+  return new Promise((resolve, reject) => {
+    try { 
+      resolve(func());
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
