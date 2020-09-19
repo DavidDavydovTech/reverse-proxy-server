@@ -25,7 +25,7 @@ class Urusai {
       .then(() => {
         return this.initalizeWebConfigs(options.path);
       })
-      .then((stuff) => {
+      .then((websiteData) => {
         console.log(stuff)
       })
       .catch((err)=>{console.log(err)})
@@ -44,7 +44,6 @@ class Urusai {
         reject(err);
       }
     })
-
   }
 
   initalizeWebConfigs(dir) {
@@ -52,21 +51,6 @@ class Urusai {
     dir = path.join(__dirname, dir)
 
     return parseConfigsJSON(dir);
-  }
-
-  forwardRequest({ url = "localhost", port = "80", request }) {
-    var socket = net.createConnection(port, url);
-
-    return new Promise((resolve, reject) => {
-      socket
-        .on("data", (data) => {
-          resolve(data);
-        })
-        .on("error", (err) => {
-          reject(err);
-        })
-        .write(request);
-    });
   }
 }
 
@@ -119,3 +103,18 @@ let initalizeHandler = (port) => {
       host: "localhost",
     });
 };
+
+let forwardRequest = ({ url = "localhost", port = "80", request }) => {
+  var socket = net.createConnection(port, url);
+
+  return new Promise((resolve, reject) => {
+    socket
+      .on("data", (data) => {
+        resolve(data);
+      })
+      .on("error", (err) => {
+        reject(err);
+      })
+      .write(request);
+  });
+}
