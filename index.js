@@ -180,6 +180,8 @@ class Urusai {
         } else {
           set(this.Dictonary, [...currentPath, "!!!DEFAULT!!!"].join('.'), port);
         }
+
+        this.Apps[config.name].listen(port)
       }
       console.log('hi6')
       resolve(this.Dictonary);
@@ -214,6 +216,11 @@ class Urusai {
     for (let handlerPort in this.Handlers) {
       let handler = this.Handlers[handlerPort];
       handler.close();
+    }
+    // Shut down express servers:
+    for (let server in this.Apps) {
+      server = this.Apps[server];
+      server.close();
     }
   }
 }
