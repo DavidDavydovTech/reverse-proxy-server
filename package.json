@@ -5,9 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "concurrently nodemon server.js",
-    "test": "jest",
-    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix client/index && npm run build --prefix client/index"
+    "dev": "nodemon server.js --signal SIGTERM",
+    "test": "jest"
   },
   "author": "David John Davydov",
   "license": "MIT",
@@ -18,9 +17,11 @@
     "bouncy": "^3.2.2",
     "chalk": "^4.1.0",
     "concurrently": "^5.2.0",
+    "documentation": "^13.0.2",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-subdomain": "^1.0.5",
+    "global": "^4.4.0",
     "mongoose": "^5.9.20",
     "parse-domain": "^3.0.2",
     "port-scout": "^1.1.2",

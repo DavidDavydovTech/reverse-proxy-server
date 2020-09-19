@@ -10,23 +10,28 @@ class Urusai {
     // Bind all methods.
     this.initalize = this.initalize.bind(this);
     this.initalizeHandlers = this.initalizeHandlers.bind(this);
-
+    this.initalizeApps = this.initalizeApps.bind(this);
+    this.fetchApps = this.fetchApps.bind(this);
     // Vars
 
     // Containers
     this.Handlers = {};
-
+    this.Apps = {};
     // Initalize the class
     this.initalize(options);
   }
-
+  
+  /**
+   * Initalizes the app by running methods prepended by 'initalize'.
+   * @param {object} options - The options for this server passes via constructor. 
+   */
   initalize(options) {
     this.initalizeHandlers(options.ports)
       .then(() => {
         return this.initalizeWebConfigs(options.path);
       })
-      .then((websiteData) => {
-        console.log(stuff);
+      .then((configs) => {
+        return this.initalizeApps(configs)
       })
       .catch((err) => {
         console.log(err);
@@ -39,10 +44,6 @@ class Urusai {
       for (let handlerPort in this.Handlers) {
         handler = this.Handlers[handlerPort];
         handler.close();
-        setTimeout(() => {
-          handler.getConnections()
-          console.log(`Handler on port ${handlerPort} is closed`);
-        }, 1000);
       }
     });
   }
@@ -73,19 +74,36 @@ class Urusai {
     return parseConfigsJSON(dir);
   }
 
+  initalizeApps (configs) {
+    return new Promise((resolve, reject) =>{
+      try {
+        this.fetchApps(configs)
+        for (let config of configs) {
+          console.log(config.name);
+        } 
+      } catch (err) {
+        reject(err)
+      }
+    })
+  }
+
   fetchApps(configs) {
     for (let config of configs) {
-      dir = config.dir
+      let dir = config.hasOwnProperty('dir')
         ? config.dir
         : process.env.DEPLOYABLES_PATH
         ? process.env.DEPLOYABLES_PATH
         : "deployables";
-      dir = path.join(__dirname, dir, config.name);
+      dir = path.join(__dirname, dir, config.name, 'server.js');
 
       if (this.Apps.hasOwnProperty(config.name)) {
         throw new Error(`APP ${config.name} ALREADY EXISTS (APPS MUST HAVE A UNIQUE "NAME")`)
       } else {
-        this.Apps[config.name] = require('dir');
+        try {
+          this.Apps[config.name] = require(dir);
+        } catch (err) {
+          throw err;
+        }
       }
     }
   }

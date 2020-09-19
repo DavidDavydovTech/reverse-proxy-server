@@ -1,3 +1,3 @@
-const MiddleMan = require('./index.js');
+const Urusai = require('./index.js');
 
-let test = new MiddleMan();
+let test = new Urusai();
