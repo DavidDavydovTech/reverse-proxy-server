@@ -1,8 +1,11 @@
+const { url } = require("inspector");
 const net = require("net");
 const { dirname } = require("path");
 const path = require("path");
 const fs = require("fs").promises;
-const parseDomain = require('parse-domain').parseDomain;
+const parseDomain = require("parse-domain").parseDomain;
+const set = require("lodash.set");
+const portScout = require('port-scout');
 
 class Urusai {
   constructor(options = {}) {
@@ -25,10 +28,10 @@ class Urusai {
     // Initalize the class
     this.initalize(options);
   }
-  
+
   /**
    * Initalizes the app by running methods prepended by 'initalize'.
-   * @param {object} options - The options for this server passes via constructor. 
+   * @param {object} options - The options for this server passes via constructor.
    */
   initalize(options) {
     this.initalizeHandlers(options.ports)
@@ -36,7 +39,10 @@ class Urusai {
         return this.initalizeWebConfigs(options.path);
       })
       .then((configs) => {
-        return this.initalizeApps(configs)
+        return this.initalizeApps(configs);
+      })
+      .then(() => {
+        console.log('DICTIONARY: \n', this.Dictonary);
       })
       .catch((err) => {
         throw err;
@@ -44,56 +50,64 @@ class Urusai {
   }
 
   initalizeOnClose = () => {
-    process.on('SIGTERM', () => {
+    process.on("SIGTERM", () => {
       this.close();
     });
-  }
+  };
 
-  initalizeHandler (port) {
+  initalizeHandler(port) {
     return net
       .createServer()
       .on("connection", (req) => {
         req.on("data", async (data) => {
-          console.log(data.toString());
-          promisifyNow(readHost, data.toString())
-            .then((url) => { try { //Note, this doesn't work on localhost subdomains. 
-              if ( !url.hasOwnProperty('domain') && !url.hasOwnProperty('topLevelDomain') ) { 
-                throw 'LOCALHOST_NOT_SUPPORTED'; 
-              }
-              let currentPath = this.Dictonary[url.topLevelDomains[0]];
-              // Go through TLDs:
-              for (let i = 1; i < url.topLevelDomains.length; i++) {
-                let tld = url.topLevelDomains[i];
-                if (currentPath.hasOwnProperty(tld))
-                currentPath = currentPath;
-              }
-              // Add domain:
-              currentPath[url.domain];
-              // Add subdomains if needed, otherwise finish up.
-              if (url.hasOwnProperty(subDomains) && url.subDomains.length > 0) {
-                for (let i = url.subDomains.length - 1; i >= 0; i--) {
-                  let sub = url.subDomains[i];
-                  if (currentPath.hasOwnProperty[sub]) {
-                    currentPath = currentPath[sub];
-                  } else {
-                    currentPath = currentPath['!!!DEFAULT!!!'];
-                  }
-                }
+          let url = readHost(data.toString());
+          //Note, this doesn't work on localhost subdomains.
+          if (
+            !url.hasOwnProperty("domain") ||
+            !url.hasOwnProperty("topLevelDomains")
+          ) {
+            throw "LOCALHOST_NOT_SUPPORTED";
+          }
+          let currentPath = this.Dictonary[url.topLevelDomains[0]];
+          console.log(currentPath)
+          // Go through TLDs:
+          for (let i = 1; i < url.topLevelDomains.length; i++) {
+            let tld = url.topLevelDomains[i];
+            if (currentPath.hasOwnProperty(tld)) {
+              currentPath = currentPath[tld];
+            }
+          }
+          // Add domain:
+          currentPath = currentPath[url.domain];
+          console.log('domain', currentPath)
+          // Add subdomains if needed, otherwise finish up.
+          if (
+            url.hasOwnProperty('subDomains') &&
+            url.subDomains.length > 0
+          ) {
+            for (let i = url.subDomains.length - 1; i >= 0; i--) {
+              let sub = url.subDomains[i];
+              console.log(sub)
+              console.log(currentPath[sub])
+              if (currentPath.hasOwnProperty(sub)) {
+                currentPath = currentPath[sub];
+                console.log(currentPath)
               } else {
-                currentPath = currentPath['!!!DEFAULT!!!'];
+                currentPath = currentPath["!!!DEFAULT!!!"];
               }
-              return currentPath;
-            } catch (err) {
-              console.log(err);
-              throw 'WEBSITE_DOESNT_EXIST';
-            }})
-            .then((port) => {
-              req.write(port);
-            })
-            .catch((err) => {
-              req.write(err.toString());
-              throw err;
+            }
+          } else {
+            currentPath = currentPath["!!!DEFAULT!!!"];
+          }
+          console.log(currentPath);
+          if (currentPath) {
+           forwardRequest({port: currentPath, request: data})
+            .then((res) => {
+              req.write(res);
             });
+          } else {
+            throw 'DOMAIN_DOES_NOT_EXIST'
+          }
         });
       })
       .on("error", (err) => {
@@ -103,7 +117,7 @@ class Urusai {
         port: port,
         host: "localhost",
       });
-  };
+  }
 
   initalizeHandlers(ports) {
     return new Promise((resolve, reject) => {
@@ -131,43 +145,72 @@ class Urusai {
     return parseConfigsJSON(dir);
   }
 
-  initalizeApps (configs) {
-    return new Promise((resolve, reject) =>{
-      try {
-        this.fetchApps(configs)
-        for (let config of configs) {
-          console.log(config.name);
-        } 
-      } catch (err) {
-        reject(err)
+  initalizeApps(configs) {
+    return new Promise(async (resolve, reject) => {
+      this.fetchApps(configs);
+      console.log('hi1')
+      for await (let config of configs) {
+        let port = await portScout.range(49152, 65535);
+
+      console.log('hi2')
+        let currentPath = [];
+        let tlds = config.tld.split(".");
+        // Go through TLDs:
+        for (let i = 0; i < tlds.length; i++) {
+          let tld = tlds[i];
+          currentPath.push(tld);
+        }
+        console.log('hi3')
+        // Add domain:
+        currentPath.push(config.domain);
+        // Add subdomains if needed, otherwise finish up.
+        if (config.hasOwnProperty('subdomains') && config.subdomains.length > 0) {
+          config.subdomains.forEach((e) => {
+            console.log('hi4')
+            let subs = e.split('.');
+            let subPath = [];
+            for (let i = subs.length - 1; i >= 0; i--) {
+              let sub = subs[i];
+              subPath.push(sub);
+            }
+            console.log('hi5')
+
+            set(this.Dictonary, [...currentPath, ...subPath].join('.'), port);
+          })  ;
+        } else {
+          set(this.Dictonary, [...currentPath, "!!!DEFAULT!!!"].join('.'), port);
+        }
       }
-    })
+      console.log('hi6')
+      resolve(this.Dictonary);
+    });
   }
 
   fetchApps(configs) {
     for (let config of configs) {
-      let dir = config.hasOwnProperty('dir')
+      let dir = config.hasOwnProperty("dir")
         ? config.dir
         : process.env.DEPLOYABLES_PATH
         ? process.env.DEPLOYABLES_PATH
         : "deployables";
-      dir = path.join(__dirname, dir, config.name, 'server.js');
+      dir = path.join(__dirname, dir, config.name, "server.js");
 
       if (this.Apps.hasOwnProperty(config.name)) {
-        throw new Error(`APP ${config.name} ALREADY EXISTS (APPS MUST HAVE A UNIQUE "NAME")`)
+        throw new Error(
+          `APP ${config.name} ALREADY EXISTS (APPS MUST HAVE A UNIQUE "NAME")`
+        );
       } else {
         try {
           this.Apps[config.name] = require(dir);
         } catch (err) {
           throw err;
-
         }
       }
     }
   }
-    
-  close () {
-    // Shut down handlers: 
+
+  close() {
+    // Shut down handlers:
     for (let handlerPort in this.Handlers) {
       let handler = this.Handlers[handlerPort];
       handler.close();
@@ -176,9 +219,6 @@ class Urusai {
 }
 
 module.exports = Urusai;
-
-
-
 
 // Helpers
 
@@ -224,17 +264,17 @@ let forwardRequest = function ({ url = "localhost", port = "80", request }) {
 
 let readHost = (request) => {
   let url = request.match(/(?<=Host:(\s+)).*/)[0];
-  url.replace(/\s/g, '');
+  url.replace(/\s/g, "");
   url = parseDomain(url);
   return url;
-}
+};
 
 let promisifyNow = (func, ...args) => {
   return new Promise((resolve, reject) => {
-    try { 
+    try {
       resolve(func.apply(null, args));
     } catch (err) {
       reject(err);
     }
   });
-}
+};
