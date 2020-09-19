@@ -2,7 +2,7 @@ const net = require("net");
 const { dirname } = require("path");
 const path = require("path");
 const fs = require("fs").promises;
-const urlParser = require('url-pattern')
+const parseDomain = require('parse-domain').parseDomain;
 
 class Urusai {
   constructor(options = {}) {
@@ -11,6 +11,7 @@ class Urusai {
     // Bind all methods.
     this.initalize = this.initalize.bind(this);
     this.initalizeOnClose = this.initalizeOnClose.bind(this);
+    this.initalizeHandler = this.initalizeHandler.bind(this);
     this.initalizeHandlers = this.initalizeHandlers.bind(this);
     this.initalizeApps = this.initalizeApps.bind(this);
     this.fetchApps = this.fetchApps.bind(this);
@@ -20,6 +21,7 @@ class Urusai {
     // Containers
     this.Handlers = {};
     this.Apps = {};
+    this.Dictonary = {};
     // Initalize the class
     this.initalize(options);
   }
@@ -47,12 +49,68 @@ class Urusai {
     });
   }
 
+  initalizeHandler (port) {
+    return net
+      .createServer()
+      .on("connection", (req) => {
+        req.on("data", async (data) => {
+          console.log(data.toString());
+          promisifyNow(readHost, data.toString())
+            .then((url) => { try { //Note, this doesn't work on localhost subdomains. 
+              if ( !url.hasOwnProperty('domain') && !url.hasOwnProperty('topLevelDomain') ) { 
+                throw 'LOCALHOST_NOT_SUPPORTED'; 
+              }
+              let currentPath = this.Dictonary[url.topLevelDomains[0]];
+              // Go through TLDs:
+              for (let i = 1; i < url.topLevelDomains.length; i++) {
+                let tld = url.topLevelDomains[i];
+                if (currentPath.hasOwnProperty(tld))
+                currentPath = currentPath;
+              }
+              // Add domain:
+              currentPath[url.domain];
+              // Add subdomains if needed, otherwise finish up.
+              if (url.hasOwnProperty(subDomains) && url.subDomains.length > 0) {
+                for (let i = url.subDomains.length - 1; i >= 0; i--) {
+                  let sub = url.subDomains[i];
+                  if (currentPath.hasOwnProperty[sub]) {
+                    currentPath = currentPath[sub];
+                  } else {
+                    currentPath = currentPath['!!!DEFAULT!!!'];
+                  }
+                }
+              } else {
+                currentPath = currentPath['!!!DEFAULT!!!'];
+              }
+              return currentPath;
+            } catch (err) {
+              console.log(err);
+              throw 'WEBSITE_DOESNT_EXIST';
+            }})
+            .then((port) => {
+              req.write(port);
+            })
+            .catch((err) => {
+              req.write(err.toString());
+              throw err;
+            });
+        });
+      })
+      .on("error", (err) => {
+        throw err;
+      })
+      .listen({
+        port: port,
+        host: "localhost",
+      });
+  };
+
   initalizeHandlers(ports) {
     return new Promise((resolve, reject) => {
       try {
         ports = sanatizePorts(ports);
         for (let port of ports) {
-          this.Handlers[port] = initalizeHandler(port);
+          this.Handlers[port] = this.initalizeHandler(port);
           console.log("Handler now listening on port", port);
         }
         resolve();
@@ -102,11 +160,12 @@ class Urusai {
           this.Apps[config.name] = require(dir);
         } catch (err) {
           throw err;
+
         }
       }
     }
   }
-
+    
   close () {
     // Shut down handlers: 
     for (let handlerPort in this.Handlers) {
@@ -148,31 +207,6 @@ let parseConfigsJSON = (dir) => {
   });
 };
 
-let initalizeHandler = (port) => {
-  return net
-    .createServer()
-    .on("connection", (req) => {
-      req.on("data", async (data) => {
-        console.log(data.toString());
-        readHost(data.toString());
-        forwardRequest({ port: 8080, request: data.toString() })
-          .then((res) => {
-            req.write(res.toString());
-          })
-          .catch((err) => {
-            req.write(err.toString());
-          });
-      });
-    })
-    .on("error", (err) => {
-      throw err;
-    })
-    .listen({
-      port: port,
-      host: "localhost",
-    });
-};
-
 let forwardRequest = function ({ url = "localhost", port = "80", request }) {
   var socket = net.createConnection(port, url);
 
@@ -191,14 +225,14 @@ let forwardRequest = function ({ url = "localhost", port = "80", request }) {
 let readHost = (request) => {
   let url = request.match(/(?<=Host:(\s+)).*/)[0];
   url.replace(/\s/g, '');
-  url = new urlParser(url);
+  url = parseDomain(url);
   return url;
 }
 
-let promisify = (func) => {
+let promisifyNow = (func, ...args) => {
   return new Promise((resolve, reject) => {
     try { 
-      resolve(func());
+      resolve(func.apply(null, args));
     } catch (err) {
       reject(err);
     }

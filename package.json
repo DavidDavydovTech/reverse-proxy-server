@@ -31,6 +31,17 @@
   },
   "devDependencies": {
     "jest": "^26.4.2",
+    "jest-nyancat-reporter": "^2.0.0",
     "nodemon": "^2.0.3"
+  },
+  "jest": {
+    "reporters": [
+      [
+        "jest-nyancat-reporter",
+        {
+          "suppressErrorReporter": false
+        }
+      ]
+    ]
   }
 }
