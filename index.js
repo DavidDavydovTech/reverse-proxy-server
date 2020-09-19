@@ -2,13 +2,12 @@ const net = require("net");
 const path = require("path");
 const fs = require("fs").promises;
 
-class MiddleMan {
+class Urusai {
   constructor(options = {}) {
     // Set up options if they don't exist.
     options.ports = options.hasOwnProperty('ports') ? options.ports : [ 80 ];
     // Bind all methods.
     this.initalize = this.initalize.bind(this);
-    this.initalizeHandler = this.initalizeHandler.bind(this);
     this.initalizeHandlers = this.initalizeHandlers.bind(this);
     this.forwardRequest = this.forwardRequest.bind(this);
 
@@ -22,43 +21,30 @@ class MiddleMan {
   }
 
   initalize(options) {
-    this.initalizeHandlers(options.ports);
-    this.initalizeWebConfigs(options.path)
+    this.initalizeHandlers(options.ports)
+      .then(() => {
+        return this.initalizeWebConfigs(options.path);
+      })
       .then((stuff) => {
         console.log(stuff)
       })
       .catch((err)=>{console.log(err)})
   }
 
-  initalizeHandler(port) {
-    return net
-      .createServer()
-      .on("connection", (req) => {
-        req.on("data", async (data) => {
-          forwardRequest({ port: 8080, request: data.toString() })
-            .then((res) => {
-              req.write(res.toString());
-            })
-            .catch((err) => {
-              req.write(err.toString());
-            });
-        });
-      })
-      .on("error", (err) => {
-        throw err;
-      })
-      .listen({
-        port: port,
-        host: "localhost",
-      });
-  }
-
   initalizeHandlers(ports) {
-    ports = sanatizePorts(ports);
-    for (let port of ports) {
-      this.handlers[port] = this.initalizeHandler(port);
-      console.log('Handler now listening on port', port)
-    }
+    return new Promise((resolve, reject) => {
+      try {
+        ports = sanatizePorts(ports);
+        for (let port of ports) {
+          this.handlers[port] = initalizeHandler(port);
+          console.log('Handler now listening on port', port)
+        }
+        resolve();
+      } catch (err) {
+        reject(err);
+      }
+    })
+
   }
 
   initalizeWebConfigs(dir) {
@@ -84,7 +70,7 @@ class MiddleMan {
   }
 }
 
-module.exports = MiddleMan;
+module.exports = Urusai;
 
 let sanatizePorts = (ports) => {
   ports = [...ports]
@@ -109,4 +95,27 @@ let parseConfigsJSON = (dir) => {
       })
     );
   });
-}
+};
+
+let initalizeHandler = (port) => {
+  return net
+    .createServer()
+    .on("connection", (req) => {
+      req.on("data", async (data) => {
+        forwardRequest({ port: 8080, request: data.toString() })
+          .then((res) => {
+            req.write(res.toString());
+          })
+          .catch((err) => {
+            req.write(err.toString());
+          });
+      });
+    })
+    .on("error", (err) => {
+      throw err;
+    })
+    .listen({
+      port: port,
+      host: "localhost",
+    });
+};
